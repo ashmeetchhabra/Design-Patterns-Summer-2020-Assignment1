@@ -1,5 +1,5 @@
 /bin/
-*/BUILD/
+./wordPlay/src/BUILD/
 /.vs/
 .project
 .classpath

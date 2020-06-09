@@ -1,9 +1,16 @@
 package wordPlay.driver;
 
-import java.io.File;
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
-import java.util.Scanner;
-import java.util.StringTokenizer;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
+import java.nio.file.InvalidPathException;
+
+import wordPlay.handler.WordRotator;
+import wordPlay.util.Constants;
+import wordPlay.util.FileProcessor;
+import wordPlay.util.Results;
 
 //import sun.security.util.Length;
 
@@ -24,52 +31,62 @@ public class Driver {
 			System.err.println("Error: Incorrect number of arguments. Program accepts 3 arguments.");
 			System.exit(0);
 		}
-		System.out.println("Hello World! Lets get started with the assignment");
-
+		// FileWriter writer = null;
 		try {
-			File myObj = new File("input.txt");
-			Scanner myReader = new Scanner(myObj);
-			int i = 0;
-			// I Loop for reading a sentence
-			while (myReader.hasNextLine()) {
-				String data = myReader.nextLine();
-				data = data.substring(0, data.length() - 1);
-				i++;
-				System.out.println(i + " Line: " + data);
-				System.out.print("::Tokenize the String::");
-				StringTokenizer st = new StringTokenizer(data);
-				int j = 0;
-				// II Loop for reading a sentence
-				while (st.hasMoreTokens()) {
-					j++;
-					System.out.println(" :" + j);
-					String token = st.nextToken();
+			FileProcessor fp = new FileProcessor(Constants.INPUTFILE);
+			String word;
+			int index = 0;
+			boolean isEndOfSentence = false;
+			FileWriter fw = new FileWriter(Constants.OUTPUTFILE);
+			fw.write("");
+			fw.close();
+			// BufferedWriter writer = new BufferedWriter(new
+			// FileWriter(Constants.OUTPUTFILE, true));
 
-					if (token.length() >= j) {
-						String substr1 = token.substring(0, token.length() - j);
-						String substr2 = token.substring(token.length() - j);
-						// System.out.println("subs2:"+substr2);
-						// System.out.println("Substr1: "+substr1+" Substr2: "+substr2);
-						String token_final = substr2 + substr1;
-
-						System.out.println("Final String: " + token_final);
-						System.out.println("LENGTH:" + token.length());
-					} else {
-
-						int k = j % token.length();
-						String substr1 = token.substring(0, token.length() - k);
-						String substr2 = token.substring(token.length() - k);
-						// System.out.println("Substr1: "+substr1+" Substr2: "+substr2);
-						String token_final = substr2 + substr1;
-						System.out.println("Final String: " + token_final);
-						System.out.println("LENGTH:" + token.length());
-					}
+			while ((word = fp.poll()) != null) {
+				index++;
+				if (word.charAt(word.length() - 1) == '.') {
+					word = word.substring(0, word.length() - 1);
+					isEndOfSentence = true;
 				}
+				WordRotator wordRotator = new WordRotator();
+				String wordAfterRotate = wordRotator.rotate(index, word);
+				Results results = new Results();
+				results.writeToFile(wordAfterRotate, Constants.OUTPUTFILE);
+
+				// writer.write(wordAfterRotate);
+
+				if (isEndOfSentence) {
+					results.writeToFile(".\n", Constants.OUTPUTFILE);
+					// writer.append(".\n");
+					index = 0;
+					isEndOfSentence = false;
+				} else
+					results.writeToFile(" ", Constants.OUTPUTFILE);
+				// writer.append(' ');
 			}
-			myReader.close();
+//			writer.close();
+		} catch (InvalidPathException e) {
+			e.getMessage();
+			System.out.println(e);
+		} catch (SecurityException e) {
+			e.getMessage();
+			System.out.println(e);
 		} catch (FileNotFoundException e) {
-			System.out.println("An error occurred:File not Found.");
+			e.getMessage();
+			System.out.println(e);
+		} catch (IOException e) {
+			e.getMessage();
+			System.out.println(e);
 		}
+//		finally {
+//			try {
+//				writer.close();
+//			} catch (IOException e) {
+//				e.getMessage();
+//				System.out.println(e);
+//			}
+//		}
 
 	}
 }

@@ -1,18 +1,14 @@
 package wordPlay.driver;
 
-import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
 import java.nio.file.InvalidPathException;
-
 import wordPlay.handler.WordRotator;
+import wordPlay.metrics.MetricsCalculator;
 import wordPlay.util.Constants;
 import wordPlay.util.FileProcessor;
 import wordPlay.util.Results;
-
-//import sun.security.util.Length;
 
 /**
  * @author John Doe
@@ -32,52 +28,70 @@ public class Driver {
 			System.exit(0);
 		}
 		// FileWriter writer = null;
+		Results results= new Results();
+		MetricsCalculator calc= new MetricsCalculator();
+		double noOfSentance=0,noOfWords=0,totalLengthOfWords=0;
 		try {
 			FileProcessor fp = new FileProcessor(Constants.INPUTFILE);
 			String word;
 			int index = 0;
 			boolean isEndOfSentence = false;
-			FileWriter fw = new FileWriter(Constants.OUTPUTFILE);
-			fw.write("");
-			fw.close();
+			FileWriter flushOutputFile = new FileWriter(Constants.OUTPUTFILE);
+			flushOutputFile.write("");
+			flushOutputFile.close();
+			FileWriter flushMetricFile = new FileWriter(Constants.METRICFILE);
+			flushMetricFile.write("");
+			flushMetricFile.close();
 			// BufferedWriter writer = new BufferedWriter(new
 			// FileWriter(Constants.OUTPUTFILE, true));
 
 			while ((word = fp.poll()) != null) {
+				noOfWords++;
+				totalLengthOfWords=totalLengthOfWords+word.length();
 				index++;
-				if (word.charAt(word.length() - 1) == '.') {
+				if (word.charAt(word.length() - 1) == Constants.LIMIT.charAt(0)) {
 					word = word.substring(0, word.length() - 1);
 					isEndOfSentence = true;
 				}
 				WordRotator wordRotator = new WordRotator();
 				String wordAfterRotate = wordRotator.rotate(index, word);
-				Results results = new Results();
 				results.writeToFile(wordAfterRotate, Constants.OUTPUTFILE);
 
 				// writer.write(wordAfterRotate);
 
 				if (isEndOfSentence) {
-					results.writeToFile(".\n", Constants.OUTPUTFILE);
-					// writer.append(".\n");
+					results.writeToFile(Constants.LIMIT+Constants.NEWLINE, Constants.OUTPUTFILE);
+					noOfSentance++;
 					index = 0;
 					isEndOfSentence = false;
 				} else
-					results.writeToFile(" ", Constants.OUTPUTFILE);
+					results.writeToFile(Constants.SPACE, Constants.OUTPUTFILE);
 				// writer.append(' ');
 			}
+			
+			double AVG_NUM_WORDS_PER_SENTENCE = calc.calculate(noOfWords, noOfSentance);
+			results.writeToFile(Constants.AVG_NUM_WORDS_PER_SENTENCE, Constants.METRICFILE);
+			results.writeToFile(String.valueOf(AVG_NUM_WORDS_PER_SENTENCE), Constants.METRICFILE);
+			
+			results.writeToFile(Constants.NEWLINE, Constants.METRICFILE);
+			
+			double AVG_WORD_LENGTH = calc.calculate(totalLengthOfWords, noOfWords);
+			results.writeToFile(Constants.AVG_WORD_LENGTH, Constants.METRICFILE);
+			results.writeToFile(String.valueOf(AVG_WORD_LENGTH), Constants.METRICFILE);
+			
 //			writer.close();
 		} catch (InvalidPathException e) {
 			e.getMessage();
-			System.out.println(e);
+			results.printToConsole(e);
 		} catch (SecurityException e) {
 			e.getMessage();
-			System.out.println(e);
+			results.printToConsole(e);
 		} catch (FileNotFoundException e) {
 			e.getMessage();
-			System.out.println(e);
+			results.printToConsole(e);
 		} catch (IOException e) {
 			e.getMessage();
-			System.out.println(e);
+			results.printToConsole(e);
 		}
 //		finally {
 //			try {

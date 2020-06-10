@@ -1,12 +1,12 @@
 package wordPlay.driver;
 
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import wordPlay.handler.WordRotator;
 import wordPlay.metrics.MetricsCalculator;
 import wordPlay.util.Constants;
+import wordPlay.util.EmptyFileException;
 import wordPlay.util.FileProcessor;
 import wordPlay.util.Results;
 
@@ -27,80 +27,99 @@ public class Driver {
 			System.err.println("Error: Incorrect number of arguments. Program accepts 3 arguments.");
 			System.exit(0);
 		}
-		// FileWriter writer = null;
-		Results results= new Results();
-		MetricsCalculator calc= new MetricsCalculator();
-		double noOfSentance=0,noOfWords=0,totalLengthOfWords=0;
+
+		// Initialization
+
+		MetricsCalculator calc = new MetricsCalculator();
+		WordRotator wordRotator = new WordRotator();
+		String word;
+		int index = 0;
+		double noOfWords;
+		double totalLengthOfWords;
+		double noOfSentance;
+		boolean isEndOfSentence = false;
+		boolean checkForEmptyInputFile = true;
 		try {
-			FileProcessor fp = new FileProcessor(Constants.INPUTFILE);
-			String word;
-			int index = 0;
-			boolean isEndOfSentence = false;
-			FileWriter flushOutputFile = new FileWriter(Constants.OUTPUTFILE);
-			flushOutputFile.write("");
-			flushOutputFile.close();
-			FileWriter flushMetricFile = new FileWriter(Constants.METRICFILE);
-			flushMetricFile.write("");
-			flushMetricFile.close();
-			// BufferedWriter writer = new BufferedWriter(new
-			// FileWriter(Constants.OUTPUTFILE, true));
+			Results result_output = new Results(args[1]);
+			Results result_metric = new Results(args[2]);
+			FileProcessor fp = new FileProcessor(args[0]);
 
+			// Read input, word by word
 			while ((word = fp.poll()) != null) {
-				noOfWords++;
-				totalLengthOfWords=totalLengthOfWords+word.length();
-				index++;
-				if (word.charAt(word.length() - 1) == Constants.LIMIT.charAt(0)) {
-					word = word.substring(0, word.length() - 1);
-					isEndOfSentence = true;
+
+				if (word.isEmpty())
+					continue; // Boundary Check IV: Empty line in input file
+				else {
+					boolean isWordMatches = word.matches("[^a-zA-Z0-9.]"); // Boundary Check III:Words contain
+																			// characters other than [a-zA-Z0-9]
+					if (isWordMatches) {
+						System.out.println("special char:" + word);
+						throw new RuntimeException("Special Character in input file");
+					}
+					if (word == "")
+						continue;
+					checkForEmptyInputFile = false;
+					noOfWords = calc.getNoOfWords();
+					noOfWords++;
+					calc.setNoOfWords(noOfWords);
+					totalLengthOfWords = calc.getTotalLengthOfWords();
+					calc.setTotalLengthOfWords(totalLengthOfWords + word.length());
+					// calculate the noOfWords and totalLengthOfWords for metric calculations
+
+					index++;
+					if (word.charAt(word.length() - 1) == Constants.LIMIT.getValue().charAt(0)) {
+						word = word.substring(0, word.length() - 1); // remove period from the last word of the sentence
+						isEndOfSentence = true; // boolean flag is used to reset the index again to 0 when period is
+												// encountered
+					}
+					word = wordRotator.rotate(index, word); // rotation of word
+					result_output.writeToFile(word); // write to a output file after rotation
+
+					if (isEndOfSentence) {
+						result_output.writeToFile(Constants.LIMIT.getValue() + Constants.NEWLINE.getValue()); // Add the
+																												// separators
+																												// in
+																												// the
+																												// output
+																												// file
+						noOfSentance = calc.getNoOfSentance();
+						noOfSentance++; // Calculate the noOfSentance
+						calc.setNoOfSentance(noOfSentance);
+
+						index = 0;
+						isEndOfSentence = false;
+					} else
+						result_output.writeToFile(Constants.SPACE.getValue());
 				}
-				WordRotator wordRotator = new WordRotator();
-				String wordAfterRotate = wordRotator.rotate(index, word);
-				results.writeToFile(wordAfterRotate, Constants.OUTPUTFILE);
-
-				// writer.write(wordAfterRotate);
-
-				if (isEndOfSentence) {
-					results.writeToFile(Constants.LIMIT+Constants.NEWLINE, Constants.OUTPUTFILE);
-					noOfSentance++;
-					index = 0;
-					isEndOfSentence = false;
-				} else
-					results.writeToFile(Constants.SPACE, Constants.OUTPUTFILE);
-				// writer.append(' ');
 			}
-			
-			double AVG_NUM_WORDS_PER_SENTENCE = calc.calculate(noOfWords, noOfSentance);
-			results.writeToFile(Constants.AVG_NUM_WORDS_PER_SENTENCE, Constants.METRICFILE);
-			results.writeToFile(String.valueOf(AVG_NUM_WORDS_PER_SENTENCE), Constants.METRICFILE);
-			
-			results.writeToFile(Constants.NEWLINE, Constants.METRICFILE);
-			
-			double AVG_WORD_LENGTH = calc.calculate(totalLengthOfWords, noOfWords);
-			results.writeToFile(Constants.AVG_WORD_LENGTH, Constants.METRICFILE);
-			results.writeToFile(String.valueOf(AVG_WORD_LENGTH), Constants.METRICFILE);
-			
-//			writer.close();
-		} catch (InvalidPathException e) {
-			e.getMessage();
-			results.printToConsole(e);
-		} catch (SecurityException e) {
-			e.getMessage();
-			results.printToConsole(e);
-		} catch (FileNotFoundException e) {
-			e.getMessage();
-			results.printToConsole(e);
-		} catch (IOException e) {
-			e.getMessage();
-			results.printToConsole(e);
-		}
-//		finally {
-//			try {
-//				writer.close();
-//			} catch (IOException e) {
-//				e.getMessage();
-//				System.out.println(e);
-//			}
-//		}
 
+			// Boundary Check I: Empty input file
+			if (checkForEmptyInputFile)
+				throw new EmptyFileException(args[0]);
+
+			// Metrics calculation and insert in metric txt file
+
+			result_metric.writeToFile(Constants.AVG_NUM_WORDS_PER_SENTENCE.getValue());
+			result_metric.writeToFile(String.valueOf(calc.calculateAvgNumWordsPerSentance()));
+			result_metric.writeToFile(Constants.NEWLINE.getValue());
+			result_metric.writeToFile(Constants.AVG_WORD_LENGTH.getValue());
+			result_metric.writeToFile(String.valueOf(calc.calculateAvgWordLength()));
+
+			result_metric.closeFile();
+			result_output.closeFile();
+
+		} catch (InvalidPathException e) {
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} catch (FileNotFoundException e) { // Boundary Check II:Missing input file
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (EmptyFileException e) {
+			e.printStackTrace();
+		} catch (RuntimeException e) {
+			System.out.println(e.getMessage());
+		}
 	}
 }

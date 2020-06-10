@@ -6,25 +6,54 @@ import java.io.IOException;
 
 public class Results implements FileDisplayInterface, StdoutDisplayInterface {
 
-	@Override
-	public void writeToFile(String str, String filename) {
-		try {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(filename, true));
-			writer.write(str);
-			writer.close();
-		} catch (IOException e) {
-			e.getMessage();
-			System.out.println(e);
-		}
+	BufferedWriter write;
+
+	/**
+	 * Constructor to open the file in append mode
+	 * 
+	 * @param filename The file in which data is to be written
+	 * @throws IOException
+	 */
+	public Results(String filename) throws IOException {
+		write = new BufferedWriter(new FileWriter(filename, true));
 
 	}
+
+	/**
+	 * Writes to a file in append mode
+	 * 
+	 * @param str The string to be written in file
+	 * @throws IOException
+	 */
+
+	@Override
+	public void writeToFile(String str) throws IOException {
+		write.write(str);
+	}
+
+	/**
+	 * Prints different number of arguments to the console
+	 * 
+	 * @param obj Varargs used to print on console
+	 */
 
 	@Override
 	public void printToConsole(Object... obj) {
 		for (int i = 0; i < obj.length; i++) {
 			System.out.println(obj[i]);
-		}		
+		}
 	}
 
+	/**
+	 * Close the file
+	 * 
+	 * @throws IOException
+	 */
+
+	@Override
+	public void closeFile() throws IOException {
+		write.close();
+
+	}
 
 }

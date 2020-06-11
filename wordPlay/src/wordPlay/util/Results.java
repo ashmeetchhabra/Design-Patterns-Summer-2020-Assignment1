@@ -15,7 +15,7 @@ public class Results implements FileDisplayInterface, StdoutDisplayInterface {
 	 * @throws IOException
 	 */
 	public Results(String filename) throws IOException {
-		write = new BufferedWriter(new FileWriter(filename, true));
+		write = new BufferedWriter(new FileWriter(filename));
 
 	}
 
@@ -50,7 +50,7 @@ public class Results implements FileDisplayInterface, StdoutDisplayInterface {
 	 * @throws IOException
 	 */
 
-	@Override
+
 	public void closeFile() throws IOException {
 		write.close();
 

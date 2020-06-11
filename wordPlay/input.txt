@@ -1,4 +1,3 @@
 Welcome to design patterns summer 2020.
 Start working on this assignment quickly.
-
 Have a great day.

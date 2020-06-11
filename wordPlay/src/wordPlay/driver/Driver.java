@@ -48,14 +48,12 @@ public class Driver {
 			while ((word = fp.poll()) != null) {
 
 				if (word.isEmpty())
-					continue; // Boundary Check IV: Empty line in input file
+					throw new RuntimeException("Found Empty Line in input file"); // Boundary Check IV: Empty line in input file
 				else {
-					boolean isWordMatches = word.matches("[^a-zA-Z0-9.]"); // Boundary Check III:Words contain
-																			// characters other than [a-zA-Z0-9]
-					if (isWordMatches) {
-						System.out.println("special char:" + word);
+					if (word.matches("[^a-zA-Z0-9.]")) // Boundary Check III:Words contain characters other than
+														// [a-zA-Z0-9]
 						throw new RuntimeException("Special Character in input file");
-					}
+
 					if (word == "")
 						continue;
 					checkForEmptyInputFile = false;
@@ -119,7 +117,7 @@ public class Driver {
 		} catch (EmptyFileException e) {
 			e.printStackTrace();
 		} catch (RuntimeException e) {
-			System.out.println(e.getMessage());
+			System.err.println(e.getMessage());
 		}
 	}
 }
